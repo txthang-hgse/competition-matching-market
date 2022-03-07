@@ -6,13 +6,18 @@ import copy
 
 class Matching_market():
     def __init__(self,colleges_dict,students_dict):
+        self.tax = 4
+
         self.colleges_dict = colleges_dict
         self.colleges_set = set()
         self.students_dict = students_dict
         self.students_set = set()
-        self.intake_score_max = 0
+        self.cutoff_score_max = 0
         self.set_up()
         self.first_turn()
+
+
+        ### Policy: Taxation:
 
 
 
@@ -52,7 +57,7 @@ class Matching_market():
         for student in self.students_set:
             student.clear()
         for student in self.students_set:
-            student.choose_college(self.colleges_set)
+            student.choose_college( self.colleges_set, self.tax)
         for college in self.colleges_set:
             college.calculate_different()
 
@@ -62,17 +67,17 @@ class Matching_market():
         for college in self.colleges_set:
             college.clear()
         for student in self.students_set:
-            student.choose_college(self.colleges_set)
+            student.choose_college(self.colleges_set,self.tax)
         for college in self.colleges_set:
             college.calculate_different()
 
     '''Start of method 2 '''
     def first_turn(self):
-        self.intake_score_max = 1500 + math.log(5000)
+        self.cutoff_score_max = 1500 + math.sqrt(4000)
 
         for college in self.colleges_set:
-            college.intake_score = self.intake_score_max / 2
-            college.intake_score_max = self.intake_score_max
+            college.cutoff_score = self.cutoff_score_max / 2
+            college.cutoff_score_max = self.cutoff_score_max
 
         self.run_matching()
 
@@ -85,7 +90,7 @@ class Matching_market():
         diff_max = 0
 
         for college in self.colleges_set:
-            if abs(college.different ) > diff_max and college.intake_score_max - college.intake_score_min > 0.1:
+            if abs(college.different ) > diff_max and college.cutoff_score_max - college.cutoff_score_min > 0.1:
                 college_max = college
                 diff_max = abs(college.different)
 
@@ -101,34 +106,33 @@ class Matching_market():
         count = 0
         while not self.check_equilibrium() and count < 5000:
             college_max = self.find_max_diff()
-
             if college_max.different < 0:
-                temp_score = copy.deepcopy( college_max.intake_score)
-                college_max.intake_score = college_max.intake_score_min
+                temp_score = copy.deepcopy( college_max.cutoff_score)
+                college_max.cutoff_score = college_max.cutoff_score_min
                 self.run_matching()
 
                 while college_max.different < 0:
-                    college_max.intake_score_min = college_max.intake_score_min -10
-                    college_max.intake_score = college_max.intake_score_min
+                    college_max.cutoff_score_min = college_max.cutoff_score_min -10
+                    college_max.cutoff_score = college_max.cutoff_score_min
                     self.run_matching()
 
 
 
-                college_max.intake_score_max = temp_score
-                college_max.intake_score = 1/4*college_max.intake_score_max + 3/4*college_max.intake_score_min
+                college_max.cutoff_score_max = temp_score
+                college_max.cutoff_score = 1/4*college_max.cutoff_score_max + 3/4*college_max.cutoff_score_min
                 self.run_matching()
             else:
-                temp_score = copy.deepcopy(college_max.intake_score)
-                college_max.intake_score = college_max.intake_score_max
+                temp_score = copy.deepcopy(college_max.cutoff_score)
+                college_max.cutoff_score = college_max.cutoff_score_max
                 self.run_matching()
 
                 while college_max.different > 0:
-                    college_max.intake_score_max = college_max.intake_score_max +10
-                    college_max.intake_score = college_max.intake_score_max
+                    college_max.cutoff_score_max = college_max.cutoff_score_max +10
+                    college_max.cutoff_score = college_max.cutoff_score_max
                     self.run_matching()
 
-                college_max.intake_score_min = temp_score
-                college_max.intake_score = (college_max.intake_score_max + college_max.intake_score_min) / 2
+                college_max.cutoff_score_min = temp_score
+                college_max.cutoff_score = (college_max.cutoff_score_max + college_max.cutoff_score_min) / 2
                 self.run_matching()
 
             count += 1
